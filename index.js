@@ -55,7 +55,8 @@ client.on('messageCreate', async (message) => {
       timeout: 10000
     });
 
-    console.log(`Posted URLs to Google Sheet successfully`);
+    await message.react("✅");
+	console.log(`Posted URLs to Google Sheet successfully`);
   } catch (err) {
     console.error('Error posting URLs:', err?.response?.data || err.message || err);
   }
