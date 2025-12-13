@@ -32,7 +32,7 @@ flowchart TD
     B -->|POST URLs| C[Google Apps Script Web App]
     C -->|Write A1:A30| D[Google Sheets: DataImport]
 
-    D -->|5 min trigger| E[processPendingReports()]
+    D -->|5 min trigger| E[processPendingReports]
     E -->|Import games| F[Stats & Derived Sheets]
 
     U[UptimeRobot] -->|Ping every 5 min| B
