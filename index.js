@@ -6,12 +6,12 @@ const express = require('express');
 // === CONFIGURATION ===
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 const GOOGLE_WEBHOOK = process.env.GOOGLE_WEBHOOK; // your Apps Script /exec URL
-const REPORTS_CHANNEL_NAME = 'reports'; // channel name to watch
+const REPORTS_CHANNEL_NAME = process.env.REPORTS_CHANNEL_NAME; // channel name to watch
 const PORT = process.env.PORT || 3000;
 
 // Validation
-if (!DISCORD_TOKEN || !GOOGLE_WEBHOOK) {
-  console.error("Missing environment variables: DISCORD_TOKEN or GOOGLE_WEBHOOK");
+if (!DISCORD_TOKEN || !GOOGLE_WEBHOOK || !REPORTS_CHANNEL_NAME) {
+  console.error("Missing environment variables: DISCORD_TOKEN or GOOGLE_WEBHOOK or REPORTS_CHANNEL_NAME");
   process.exit(1);
 }
 
@@ -37,7 +37,7 @@ client.once('ready', () => {
 client.on('messageCreate', async (message) => {
   try {
     if (message.author?.bot) return; // ignore bots
-    if (message.channel?.name !== REPORTS_CHANNEL_NAME) return; // only #reports
+    if (message.channel?.name !== REPORTS_CHANNEL_NAME) return; // monitor only the configured channel
 
     const text = message.content || '';
     const matches = text.match(URL_REGEX);
@@ -72,7 +72,7 @@ client.login(DISCORD_TOKEN).catch(err => {
 const app = express();
 
 app.get('/', (req, res) => {
-  res.send('Quakeworld Bot is running!');
+  res.send('Reports Watcher bot is running!');
 });
 
 app.listen(PORT, () => {
