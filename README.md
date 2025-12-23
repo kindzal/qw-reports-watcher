@@ -185,4 +185,4 @@ Each instance:
 # Prerequisities
 
 - Deploy the **Apps Script code / Web frontend / API** and configure the Google Sheet backend
-  👉 https://github.com/kindzal/qw-tourney-management   
+  👉 https://github.com/kindzal/qw-tourney-management
