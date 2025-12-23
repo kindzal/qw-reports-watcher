@@ -21,7 +21,6 @@ The Google Apps Script endpoint:
 
 - Validates and stores URLs in a Google Sheet queue
 - Processes pending reports every **15 minutes**
-- Runs 24/7 on Railway
 
 The system cleanly separates **ingestion** from **processing** for reliability and scalability.
 
