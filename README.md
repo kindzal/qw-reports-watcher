@@ -11,14 +11,17 @@ A Discord bot and Google Sheets pipeline that automatically collects QuakeWorld 
 The Reports Watcher Bot:
 
 - Listens to a **configurable Discord channel**
-- Extracts match URLs in the format:
+- Extracts games URLs in the format:
   ```
   https://hub.quakeworld.nu/games/?gameId=
   ```
-- Sends valid URLs to a Google Apps Script Web App
-- Stores URLs in a Google Sheet queue
-- Processes pending reports every **5 minutes**
-- Runs 24/7 on Railway, kept alive by UptimeRobot
+- Sends valid URLs to a Google Apps Script endpoint
+
+The Google Apps Script endpoint:
+
+- Validates and stores URLs in a Google Sheet queue
+- Processes pending reports every **15 minutes**
+- Runs 24/7 on Railway
 
 The system cleanly separates **ingestion** from **processing** for reliability and scalability.
 
@@ -29,13 +32,11 @@ The system cleanly separates **ingestion** from **processing** for reliability a
 ```mermaid
 flowchart TD
     A[Discord Server] -->|Messages| B[Reports Watcher Bot]
-    B -->|POST URLs| C[Google Apps Script Web App]
+    B -->|POST URLs| C[Google Apps Script doPost Handler]
     C -->|Write A1:A30| D[Google Sheets: DataImport]
 
     D -->|5 min trigger| E[processPendingReports]
     E -->|Import games| F[Stats & Derived Sheets]
-
-    U[UptimeRobot] -->|Ping every 5 min| B
 ```
 
 ---
@@ -83,11 +84,11 @@ This allows deploying **multiple instances** of the same codebase for different 
 
 ## ⏱️ Uptime Monitoring
 
-**UptimeRobot** pings the bot’s HTTP endpoint every 5 minutes to prevent idle shutdown on free tiers.
+**UptimeRobot** pings the bot’s HTTP endpoint every 5 minutes to check its health
 
 ---
 
-## 📊 Google Apps Script Web App
+## 📊 Google Apps Script endpoint
 
 ### Purpose
 Acts as a lightweight ingestion endpoint.
@@ -99,14 +100,12 @@ Acts as a lightweight ingestion endpoint.
   ```
   DataImport!A1:A30
   ```
-- Flushes writes immediately
 
 ### Important
-The web app **does NOT**:
+The endpoint **does NOT**:
 - Import game data
 - Update stats
-- Run heavy processing
-- Log errors to sheets
+- Run any heavy processing
 
 ---
 
@@ -118,7 +117,7 @@ The web app **does NOT**:
 
 ### Scheduled Processing
 - Function: `processPendingReports()`
-- Trigger: Time-based, every **5 minutes**
+- Trigger: Time-based, every **15 minutes**
 - Responsibilities:
   - Fetch game data
   - Update stats
@@ -130,11 +129,11 @@ This design ensures ingestion is fast and processing is reliable.
 
 ## 🔄 End-to-End Workflow
 
-1. User posts a match link in Discord
-2. Bot validates and extracts the URL
-3. Bot POSTs URL(s) to Apps Script
+1. Player posts QuakeWorld hub game links on Discord
+2. Bot validates and extracts the URLs
+3. Bot POSTs URLs to Apps Script
 4. Apps Script writes to Google Sheets
-5. `processPendingReports()` runs every 5 minutes
+5. `processPendingReports()` runs every 15 minutes
 6. Game data is imported and stats updated
 
 ---
@@ -152,7 +151,7 @@ Reports Watcher bot is running!
 - Confirm it appears in the `DataImport` sheet
 
 ### Processing Test
-- Wait for the 5-minute trigger
+- Wait for the 15-minute trigger
 - Verify stats update as expected
 
 ---
@@ -182,9 +181,3 @@ Each instance:
 - Reliable scheduled processing
 - Free-tier friendly
 - Fully version controlled
-
----
-
-## 📜 License
-
-MIT (or your preferred license)
