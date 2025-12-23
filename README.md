@@ -35,7 +35,7 @@ flowchart TD
     B -->|POST URLs| C[Google Apps Script doPost Handler]
     C -->|Write A1:A30| D[Google Sheets: DataImport]
 
-    D -->|5 min trigger| E[processPendingReports]
+    D -->|15 min trigger| E[processPendingReports]
     E -->|Import games| F[Stats & Derived Sheets]
 ```
 
@@ -84,7 +84,7 @@ This allows deploying **multiple instances** of the same codebase for different 
 
 ## ⏱️ Uptime Monitoring
 
-**UptimeRobot** pings the bot’s HTTP endpoint every 5 minutes to check its health
+**UptimeRobot** pings the bot’s HTTP endpoint periodically to check its health
 
 ---
 
