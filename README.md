@@ -65,10 +65,11 @@ The bot is fully configured via environment variables:
 | Variable | Description |
 |--------|-------------|
 | `DISCORD_TOKEN` | Discord bot token |
-| `GOOGLE_WEBHOOK` | Google Apps Script Web App `/exec` URL |
+| `GOOGLE_WEBHOOK` | Google Apps Script Web App `/exec` URL or short URL |
 | `REPORTS_CHANNEL_NAME` | Discord channel name to monitor |
 
 This allows deploying **multiple instances** of the same codebase for different servers or channels.
+Ideally Google Apps Script Web App URL (`GOOGLE_WEBHOOK`) is shortened using an external service like Short.io so the environment vairable does not have to change upon each deployment of the backend.
 
 ---
 
@@ -180,3 +181,8 @@ Each instance:
 - Reliable scheduled processing
 - Free-tier friendly
 - Fully version controlled
+
+# Prerequisities
+
+- Deploy the **Apps Script code / Web frontend / API** and configure the Google Sheet backend
+  👉 https://github.com/kindzal/qw-tourney-management   
