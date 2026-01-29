@@ -42,6 +42,10 @@ flowchart TD
 
 ## 🤖 Discord Bot
 
+### Scopes & invite
+
+TO DO
+
 ### Features
 - Built with **Node.js** and **discord.js**
 - Monitors a single Discord channel (configured via env var)
@@ -57,6 +61,18 @@ Reports Watcher bot is running!
 ```
 
 ---
+
+### Payload example
+
+```
+{
+  "urls": [
+    "https://hub.quakeworld.nu/games/?gameId=193985",
+    "https://hub.quakeworld.nu/games/?gameId=193986",
+    "https://hub.quakeworld.nu/games/?gameId=193987"
+  ]
+}
+```
 
 ## 🔐 Environment Variables
 
