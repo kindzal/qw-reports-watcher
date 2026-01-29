@@ -43,8 +43,20 @@ flowchart TD
 ## 🤖 Discord Bot
 
 ### Scopes & invite
+A new application needs to be created for each instance of the bot using Discord Developer Portal https://discord.com/developers/applications
 
-TO DO
+#### Bot tab 
+`Message Content Intent` is required for the bot to be able to access message content so make sure it is selected.
+Use `Reset Token` button to create a new token and make a note of it. It will be required to configure the URL post service later.
+
+#### OAuth2 tab 
+Using `OAuth2 URL Generator` generate the invite URL by selecting 'bot' from the `Scopes` list then the following from the `Bot Permissions` list:
+- View Channels
+- Read Message History
+- Add Reactions
+
+Copy `Generated URL` and use the link to invite the bot to the required server.
+When inviting the bot make sure all scopes are ticked.
 
 ### Features
 - Built with **Node.js** and **discord.js**
