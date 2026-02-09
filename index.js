@@ -5,13 +5,13 @@ const express = require('express');
 
 // === CONFIGURATION ===
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
-const GOOGLE_WEBHOOK = process.env.GOOGLE_WEBHOOK; // your Apps Script /exec URL
-const REPORTS_CHANNEL_NAME = process.env.REPORTS_CHANNEL_NAME; // channel name to watch
+const GOOGLE_WEBHOOK = process.env.GOOGLE_WEBHOOK;
+const REPORTS_CHANNEL_NAME = process.env.REPORTS_CHANNEL_NAME;
+const SCHEDULED_GAMES_CHANNEL_NAME = process.env.SCHEDULED_GAMES_CHANNEL_NAME;
 const PORT = process.env.PORT || 3000;
 
-// Validation
 if (!DISCORD_TOKEN || !GOOGLE_WEBHOOK || !REPORTS_CHANNEL_NAME) {
-  console.error("Missing environment variables: DISCORD_TOKEN or GOOGLE_WEBHOOK or REPORTS_CHANNEL_NAME");
+  console.error("Missing required environment variables");
   process.exit(1);
 }
 
@@ -28,81 +28,102 @@ const client = new Client({
 // Regex for Quakeworld URLs
 const URL_REGEX = /https:\/\/hub\.quakeworld\.nu\/games\/\?gameId=\d+/g;
 
-// Bot ready
 client.once('ready', () => {
   console.log(`Logged in as ${client.user.tag}`);
 });
 
 /**
- * Shared logic for message create & update
+ * Handle Reports Channel (existing behavior)
+ */
+async function handleReports(message, isEdit) {
+  const text = message.content || '';
+  const matches = text.match(URL_REGEX);
+  if (!matches?.length) return;
+
+  const urls = Array.from(new Set(matches)).slice(0, 10);
+
+  await axios.post(
+    `${GOOGLE_WEBHOOK}?action=reports`,
+    { urls },
+    { headers: { 'Content-Type': 'application/json' }, timeout: 10000 }
+  );
+
+  await message.react(isEdit ? "🔄" : "✅");
+}
+
+/**
+ * Handle Scheduled Games Channel
+ */
+async function handleScheduledGame(message, isEdit) {
+  const roles = message.mentions.roles;
+
+  // Must mention exactly 2 roles
+  if (roles.size < 2) {
+    await message.react("⚠️");
+    return;
+  }
+
+  const roleMentions = roles.map(r => ({
+    id: r.id,
+    name: r.name
+  }));
+
+  const payload = {
+    content: message.content,
+    roles: roleMentions,
+    author: message.author.tag,
+    messageId: message.id,
+    createdAt: message.createdAt.toISOString(),
+    edited: isEdit
+  };
+
+  await axios.post(
+    `${GOOGLE_WEBHOOK}?action=schedule`,
+    payload,
+    { headers: { 'Content-Type': 'application/json' }, timeout: 10000 }
+  );
+
+  await message.react(isEdit ? "🔄" : "📅");
+}
+
+/**
+ * Shared handler
  */
 async function handleMessage(message, isEdit = false) {
   try {
-    if (!message) return;
-    if (message.author?.bot) return;
-    if (message.channel?.name !== REPORTS_CHANNEL_NAME) return;
+    if (!message || message.author?.bot) return;
 
-    const text = message.content || '';
-    const matches = text.match(URL_REGEX);
-    if (!matches || matches.length === 0) return;
+    const channelName = message.channel?.name;
 
-    // Deduplicate and limit 10
-    const urls = Array.from(new Set(matches)).slice(0, 10);
+    if (channelName === REPORTS_CHANNEL_NAME) {
+      await handleReports(message, isEdit);
+    }
 
-    console.log(
-      `${isEdit ? 'Edit' : 'New'} message: found ${urls.length} URLs from ${message.author.tag}`
-    );
+    if (
+      SCHEDULED_GAMES_CHANNEL_NAME &&
+      channelName === SCHEDULED_GAMES_CHANNEL_NAME
+    ) {
+      await handleScheduledGame(message, isEdit);
+    }
 
-    // POST to Google Apps Script endpoint
-    const payload = { urls };
-    await axios.post(GOOGLE_WEBHOOK, payload, {
-      headers: { 'Content-Type': 'application/json' },
-      timeout: 10000
-    });
-
-    // React accordingly
-    await message.react(isEdit ? "🔄" : "✅");
-    console.log(`Posted URLs to Google Sheet successfully`);
   } catch (err) {
-    console.error(
-      'Error posting URLs:',
-      err?.response?.data || err.message || err
-    );
-
-    // Failure reaction (best-effort)
-    try {
-      await message.react("❌");
-    } catch (_) {}
+    console.error(err?.response?.data || err.message || err);
+    try { await message.react("❌"); } catch (_) {}
   }
 }
 
-// New messages
-client.on('messageCreate', async (message) => {
-  await handleMessage(message, false);
+// Events
+client.on('messageCreate', msg => handleMessage(msg, false));
+client.on('messageUpdate', (oldMsg, newMsg) => {
+  if (!newMsg?.content || oldMsg?.content === newMsg.content) return;
+  handleMessage(newMsg, true);
 });
 
-// Edited messages
-client.on('messageUpdate', async (oldMessage, newMessage) => {
-  // Ignore embed-only or no-op edits
-  if (!newMessage?.content) return;
-  if (oldMessage?.content === newMessage.content) return;
+client.login(DISCORD_TOKEN);
 
-  await handleMessage(newMessage, true);
-});
-
-// Login to Discord
-client.login(DISCORD_TOKEN).catch(err => {
-  console.error('Discord login failed:', err);
-  process.exit(1);
-});
-
-// === Minimal HTTP server for uptime ping ===
+// === Minimal HTTP server ===
 const app = express();
-
-app.get('/', (req, res) => {
-  res.send('Reports Watcher bot is running!');
-});
-
+app.get('/', (_, res) => res.send('Bot running'));
 app.listen(PORT, () => {
-  console.log(`HTTP server listening on port ${PORT} (UptimeRobot friendly)`);
+  console.log(`HTTP server listening on ${PORT}`);
 });
